@@ -18,4 +18,7 @@ abstract class CiudadDAO {
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     abstract suspend fun insertarCiudad(ciudad: Ciudad): Long
+
+    @Query("SELECT * FROM Ciudad")
+    abstract fun obtenerCiudades(): LiveData<List<Ciudad>>
 }

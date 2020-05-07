@@ -12,4 +12,6 @@ data class Ciudad(
     val longitude: Double?,
     val latitude: Double?,
     val altitude: Double?
-)
+){
+    override fun toString(): String = name!!
+}

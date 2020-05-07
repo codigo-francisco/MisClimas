@@ -11,10 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.rockbass.misclimas.CIUDAD_KEY
-import com.rockbass.misclimas.DEFAULT_SHARED_PREFERENCES
-import com.rockbass.misclimas.ID_CIUDAD_DEFAULT
-import com.rockbass.misclimas.R
+import com.rockbass.misclimas.*
 import com.rockbass.misclimas.adapters.ClimaCardAdapter
 import com.rockbass.misclimas.databinding.ClimaCardBinding
 import com.rockbass.misclimas.viewmodels.IndexViewModel
@@ -29,9 +26,7 @@ class IndexFragment: Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        idCiudad = activity
-            ?.getSharedPreferences(DEFAULT_SHARED_PREFERENCES, Activity.MODE_PRIVATE)
-            ?.getLong(CIUDAD_KEY, ID_CIUDAD_DEFAULT)
+        idCiudad = activity?.leerIdCiudad()
     }
 
     override fun onCreateView(

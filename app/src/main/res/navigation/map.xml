@@ -45,5 +45,12 @@
     <fragment
         android:id="@+id/indexFragment"
         android:name="com.rockbass.misclimas.views.IndexFragment"
-        android:label="IndexFragment" />
+        android:label="IndexFragment" >
+        <action
+            android:id="@+id/action_indexFragment_self"
+            app:destination="@id/indexFragment"
+            app:launchSingleTop="true"
+            app:popUpTo="@+id/map"
+            app:popUpToInclusive="true" />
+    </fragment>
 </navigation>

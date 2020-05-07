@@ -11,10 +11,7 @@ import androidx.lifecycle.Observer
 import androidx.navigation.fragment.NavHostFragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.mapbox.mapboxsdk.plugins.places.autocomplete.PlaceAutocomplete
-import com.rockbass.misclimas.CIUDAD_KEY
-import com.rockbass.misclimas.DEFAULT_SHARED_PREFERENCES
-import com.rockbass.misclimas.R
-import com.rockbass.misclimas.MAPBOX_TOKEN
+import com.rockbass.misclimas.*
 import com.rockbass.misclimas.db.entities.Ciudad
 import com.rockbass.misclimas.viewmodels.PlaceViewModel
 
@@ -41,11 +38,7 @@ class PlaceFragment : Fragment() {
                     placeViewModel.insertarCiudad(ciudad).observe(
                         viewLifecycleOwner, Observer { idCiudad ->
                             //Redirigir a pantalla principal
-                            activity
-                                ?.getSharedPreferences(DEFAULT_SHARED_PREFERENCES, Activity.MODE_PRIVATE)
-                                ?.edit()
-                                ?.putLong(CIUDAD_KEY, idCiudad)
-                                ?.apply()
+                            activity?.colocarIdCiudad(idCiudad)
 
                             NavHostFragment.findNavController(this)
                                 .navigate(

@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">MisClimas</string>
+    <string name="title">Mis Climas</string>
+    <string name="seleccione_localizacion">Es necesario que seleccione un mapa</string>
+    <string name="primera_explicacion">En mis climas podras consultar los climas de las ciudades que prefieras. La aplicación recordará tus ciudades elegidas.\n\nA continuación elige tu primera ciudad.</string>
+    <string name="continuar">Continuar</string>
+    <string name="escoger_ciudad">Escoger Ciudad</string>
+    <string name="grados">%s °</string>
+    <string name="logo">Logo</string>
+    <string name="error_solicitud_clima">Ha ocurrido un error al solicitar los datos del clima</string>
+</resources>

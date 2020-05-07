@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/map"
+    app:startDestination="@id/loadFragment">
+
+    <fragment
+        android:id="@+id/loadFragment"
+        android:name="com.rockbass.misclimas.views.LoadFragment"
+        android:label="LoadFragment" >
+        <action
+            android:id="@+id/action_loadFragment_to_explanationFragment"
+            app:destination="@id/explanationFragment"
+            app:launchSingleTop="true"
+            app:popUpTo="@+id/map"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_loadFragment_to_indexFragment"
+            app:destination="@id/indexFragment"
+            app:launchSingleTop="true"
+            app:popUpTo="@+id/map"
+            app:popUpToInclusive="true" />
+    </fragment>
+    <fragment
+        android:id="@+id/placeAutoCompleteFragment"
+        android:name="com.rockbass.misclimas.views.PlaceFragment"
+        android:label="PlaceAutoCompleteFragment" >
+        <action
+            android:id="@+id/action_placeAutoCompleteFragment_to_indexFragment"
+            app:destination="@id/indexFragment"
+            app:launchSingleTop="true"
+            app:popUpTo="@+id/map"
+            app:popUpToInclusive="true" />
+    </fragment>
+    <fragment
+        android:id="@+id/explanationFragment"
+        android:name="com.rockbass.misclimas.views.ExplanationFragment"
+        android:label="ExplanationFragment" >
+        <action
+            android:id="@+id/action_explanationFragment_to_placeAutoCompleteFragment"
+            app:destination="@id/placeAutoCompleteFragment"
+            app:launchSingleTop="true"
+            app:popUpTo="@+id/map"
+            app:popUpToInclusive="true" />
+    </fragment>
+    <fragment
+        android:id="@+id/indexFragment"
+        android:name="com.rockbass.misclimas.views.IndexFragment"
+        android:label="IndexFragment" />
+</navigation>

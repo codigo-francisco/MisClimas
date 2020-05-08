@@ -5,10 +5,7 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.databinding.DataBindingUtil
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.liveData
+import androidx.lifecycle.*
 import com.rockbass.misclimas.R
 import com.rockbass.misclimas.adapters.ClimaCardAdapter
 import com.rockbass.misclimas.databinding.ClimaCardBinding
@@ -17,6 +14,7 @@ import com.rockbass.misclimas.db.entities.Ciudad
 import com.rockbass.misclimas.db.entities.ClimaResponse
 import com.rockbass.misclimas.db.entities.Data
 import com.rockbass.misclimas.net.climaService
+import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -32,15 +30,49 @@ class IndexViewModel(application: Application) : AndroidViewModel(application){
         val errorMessage: String? = null
     )
 
-    fun getCiudad(id: Long): LiveData<Ciudad> {
-        return ciudadDao.obtenerCiudad(id)
+    enum class ReasonsNotDeleted {
+        SOLO_UNA_CIUDAD
     }
 
-    fun getClima(lat: Double, lon: Double) : LiveData<ReturnedData>{
+    data class ReturnedDeleted (
+        val result: Boolean,
+        val reason: ReasonsNotDeleted? = null,
+        val primerId: Long? = null
+    )
+
+    fun eliminarCiudad(ciudad: Ciudad): LiveData<ReturnedDeleted>{
+        return liveData {
+            val cantidad = ciudadDao.cantidadCiudades()
+            if (cantidad > 1){
+                ciudadDao.eliminarCiudad(ciudad)
+                val primerId = ciudadDao.primerId()
+                emit(
+                    ReturnedDeleted(
+                        true,
+                        primerId = primerId
+                    )
+                )
+            }else{
+                emit(
+                    ReturnedDeleted(
+                        false,
+                        ReasonsNotDeleted.SOLO_UNA_CIUDAD
+                    )
+                )
+            }
+        }
+    }
+
+    fun getCiudades(): LiveData<List<Ciudad>> = ciudadDao.obtenerCiudades()
+
+    fun getClima(idCiudad: Long) : LiveData<ReturnedData>{
         val liveData = MutableLiveData<ReturnedData>()
+
+        viewModelScope.launch{
+            val ciudad = ciudadDao.obtenerCiudad(idCiudad)
             climaService.getClimas(
-                lon,
-                lat
+                ciudad.longitude!!,
+                ciudad.latitude!!
             ).enqueue(object: Callback<ClimaResponse> {
                 override fun onFailure(call: Call<ClimaResponse>, t: Throwable) {
                     Log.e(TAG, t.message, t)
@@ -74,6 +106,9 @@ class IndexViewModel(application: Application) : AndroidViewModel(application){
                 }
 
             })
+        }
+
+
 
         return liveData
     }

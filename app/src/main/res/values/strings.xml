@@ -10,4 +10,8 @@
     <string name="error_solicitud_clima">Ha ocurrido un error al solicitar los datos del clima</string>
     <string name="agregar_ciudad">Agregar Ciudad</string>
     <string name="borrar_ciudad">Borrar Ciudad</string>
+    <string name="titulo_eliminar">Eliminar Ciudad</string>
+    <string name="mensaje_eliminar">¿Está seguro de eliminar la ciudad de %s?</string>
+    <string name="boton_eliminar">Eliminar</string>
+    <string name="boton_cancelar">Cancelar</string>
 </resources>

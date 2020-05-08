@@ -6,31 +6,11 @@
     android:layout_height="match_parent"
     tools:context=".views.MainActivity">
 
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        app:popupTheme="@style/ThemeOverlay.AppCompat.ActionBar"
-        app:title="@string/app_name"
-        app:menu="@menu/menu"
-        />
-
-    <Spinner
-        android:id="@+id/spinner_ciudad"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/toolbar"
-        />
-
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/map_fragment"
         android:name="androidx.navigation.fragment.NavHostFragment"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/spinner_ciudad"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_height="match_parent"
         app:defaultNavHost="true"
         app:navGraph="@navigation/map" />
 </androidx.constraintlayout.widget.ConstraintLayout>

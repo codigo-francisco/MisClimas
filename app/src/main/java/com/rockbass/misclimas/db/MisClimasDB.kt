@@ -6,9 +6,12 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.rockbass.misclimas.DB_NAME
 import com.rockbass.misclimas.db.dao.CiudadDAO
+import com.rockbass.misclimas.db.entities.Ciudad
 
 @Database(
-    entities = [],
+    entities = [
+        Ciudad::class
+    ],
     version = 1,
     exportSchema = true
 )

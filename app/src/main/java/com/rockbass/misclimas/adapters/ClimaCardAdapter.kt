@@ -31,7 +31,7 @@ class ClimaCardAdapter(private val data: List<Data>) : RecyclerView.Adapter<Clim
 
         fun binding(data: Data){
             bindingAdapter.clima = data
-            bindingAdapter.executePendingBindings()
+            //bindingAdapter.executePendingBindings()
         }
     }
 }

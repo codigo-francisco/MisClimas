@@ -2,6 +2,7 @@ package com.rockbass.misclimas.views
 
 import android.app.Activity
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,6 +12,7 @@ import androidx.lifecycle.Observer
 import androidx.navigation.fragment.NavHostFragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.mapbox.mapboxsdk.plugins.places.autocomplete.PlaceAutocomplete
+import com.mapbox.mapboxsdk.plugins.places.autocomplete.model.PlaceOptions
 import com.rockbass.misclimas.*
 import com.rockbass.misclimas.db.entities.Ciudad
 import com.rockbass.misclimas.viewmodels.PlaceViewModel
@@ -18,8 +20,13 @@ import com.rockbass.misclimas.viewmodels.PlaceViewModel
 class PlaceFragment : Fragment() {
 
     private val REQUEST_CODE_AUTOCOMPLETE = 10
-    private val placeViewModel: PlaceViewModel =
-        defaultViewModelProviderFactory.create(PlaceViewModel::class.java)
+    private lateinit var placeViewModel: PlaceViewModel
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        placeViewModel = defaultViewModelProviderFactory.create(PlaceViewModel::class.java)
+    }
+
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -59,8 +66,14 @@ class PlaceFragment : Fragment() {
 
         val floatingButton = view.findViewById<FloatingActionButton>(R.id.fab_location_search)
         floatingButton.setOnClickListener {
+            val placeOptions = PlaceOptions
+                .builder()
+                .backgroundColor(Color.WHITE)
+                .build()
+
             val intent = PlaceAutocomplete.IntentBuilder()
                 .accessToken(MAPBOX_TOKEN)
+                .placeOptions(placeOptions)
                 .build(activity)
             startActivityForResult(intent, REQUEST_CODE_AUTOCOMPLETE)
         }

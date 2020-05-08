@@ -1,6 +1,9 @@
-package com.rockbass.misclimas
+package com.rockbass.misclimas.helpers
 
 import android.app.Activity
+import com.rockbass.misclimas.CIUDAD_KEY
+import com.rockbass.misclimas.DEFAULT_SHARED_PREFERENCES
+import com.rockbass.misclimas.ID_CIUDAD_DEFAULT
 
 fun Activity.colocarIdCiudad(idCiudad: Long) {
     this

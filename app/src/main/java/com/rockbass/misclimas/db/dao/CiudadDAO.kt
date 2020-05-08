@@ -22,8 +22,8 @@ abstract class CiudadDAO {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     abstract suspend fun insertarCiudad(ciudad: Ciudad): Long
 
-    @Delete
-    abstract suspend fun eliminarCiudad(ciudad: Ciudad)
+    @Query("DELETE FROM Ciudad WHERE id=:id")
+    abstract suspend fun eliminarCiudad(id: Long)
 
     @Query("SELECT * FROM Ciudad")
     abstract fun obtenerCiudades(): LiveData<List<Ciudad>>

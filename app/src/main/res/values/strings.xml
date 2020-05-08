@@ -14,4 +14,5 @@
     <string name="mensaje_eliminar">¿Está seguro de eliminar la ciudad de %s?</string>
     <string name="boton_eliminar">Eliminar</string>
     <string name="boton_cancelar">Cancelar</string>
+    <string name="mensaje_no_eliminado_una_ciudad">Necesita tener al menos 1 ciudad guardada</string>
 </resources>

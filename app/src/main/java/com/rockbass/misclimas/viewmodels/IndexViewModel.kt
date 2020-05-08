@@ -27,7 +27,8 @@ class IndexViewModel(application: Application) : AndroidViewModel(application){
     data class ReturnedData(
         val data: List<Data>? = null,
         val hasError: Boolean = false,
-        val errorMessage: String? = null
+        val errorMessage: String? = null,
+        val ciudad: Ciudad? = null
     )
 
     enum class ReasonsNotDeleted {
@@ -40,11 +41,11 @@ class IndexViewModel(application: Application) : AndroidViewModel(application){
         val primerId: Long? = null
     )
 
-    fun eliminarCiudad(ciudad: Ciudad): LiveData<ReturnedDeleted>{
+    fun eliminarCiudad(idCiudad: Long): LiveData<ReturnedDeleted>{
         return liveData {
             val cantidad = ciudadDao.cantidadCiudades()
             if (cantidad > 1){
-                ciudadDao.eliminarCiudad(ciudad)
+                ciudadDao.eliminarCiudad(idCiudad)
                 val primerId = ciudadDao.primerId()
                 emit(
                     ReturnedDeleted(
@@ -92,7 +93,8 @@ class IndexViewModel(application: Application) : AndroidViewModel(application){
                         val responseData = response.body()?.dataseries
                         liveData.postValue(
                             ReturnedData(
-                                data = responseData
+                                data = responseData,
+                                ciudad = ciudad
                             )
                         )
                     }else{

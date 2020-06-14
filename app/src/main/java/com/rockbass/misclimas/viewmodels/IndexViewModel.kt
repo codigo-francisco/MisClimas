@@ -14,6 +14,7 @@ import com.rockbass.misclimas.db.entities.Ciudad
 import com.rockbass.misclimas.db.entities.ClimaResponse
 import com.rockbass.misclimas.db.entities.Data
 import com.rockbass.misclimas.net.climaService
+import com.rockbass.misclimas.net.hasNetwork
 import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback

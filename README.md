@@ -1,7 +1,8 @@
 # Mis Climas
 
 [![Mis Climas](https://lh3.googleusercontent.com/OK2pjD8mz-6QfAWfRRBIvhql9LuJ2zNdNKve1altXl_5v-HjscXW-8OBtpN18UmGODeS=s180-rw)](https://play.google.com/store/apps/details?id=com.rockbass.misclimas)
-[Ficha a la playstore](https://lh3.googleusercontent.com/OK2pjD8mz-6QfAWfRRBIvhql9LuJ2zNdNKve1altXl_5v-HjscXW-8OBtpN18UmGODeS=s180-rw)
+
+<br/>[Ficha a la playstore](https://play.google.com/store/apps/details?id=com.rockbass.misclimas)
 
 Mis Climas es una aplicación Android programada en Kotlin para informarte de las temperaturas maximas y minimas de distintas ciudades.
 

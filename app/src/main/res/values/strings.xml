@@ -14,4 +14,6 @@
     <string name="boton_eliminar">Eliminar</string>
     <string name="boton_cancelar">Cancelar</string>
     <string name="mensaje_no_eliminado_una_ciudad">Necesita tener al menos 1 ciudad guardada</string>
+    <string name="buscar_ubicaciones">Buscar ubicaciones</string>
+    <string name="current_location">Seleccionar ubicación actual</string>
 </resources>

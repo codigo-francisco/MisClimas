@@ -19,8 +19,7 @@ data class Data(
 
     fun getDiaDeLaSemana(): String{
         val localDate = LocalDate.parse(date, DateTimeFormatter.BASIC_ISO_DATE)
-        return localDate.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
-            .capitalize()
+        return localDate.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault()).capitalize(Locale.getDefault())
     }
 
     fun getFecha(): String {

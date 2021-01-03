@@ -1,13 +1,14 @@
 package com.rockbass.misclimas.viewmodels
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.LiveData
-import com.rockbass.misclimas.db.MisClimasDB
+import androidx.lifecycle.ViewModel
+import com.rockbass.misclimas.db.dao.CiudadDAO
+import javax.inject.Inject
 
-class LoadViewModel(application: Application): AndroidViewModel(application){
-    private val db = MisClimasDB.getInstance(application)
-    private val ciudadDAO = db.ciudadDAO()
+class LoadViewModel @ViewModelInject constructor(
+    private val ciudadDAO : CiudadDAO
+): ViewModel(){
 
     fun cantidadCiudad() : LiveData<Long> = ciudadDAO.cantidadCiudad()
 }

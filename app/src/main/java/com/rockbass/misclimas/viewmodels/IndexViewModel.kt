@@ -1,29 +1,23 @@
 package com.rockbass.misclimas.viewmodels
 
-import android.app.Application
-import android.util.Log
-import android.view.View
-import android.widget.Toast
-import androidx.databinding.DataBindingUtil
+import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.*
-import com.rockbass.misclimas.R
-import com.rockbass.misclimas.adapters.ClimaCardAdapter
-import com.rockbass.misclimas.databinding.ClimaCardBinding
-import com.rockbass.misclimas.db.MisClimasDB
+import com.rockbass.misclimas.db.dao.CiudadDAO
 import com.rockbass.misclimas.db.entities.Ciudad
 import com.rockbass.misclimas.db.entities.ClimaResponse
 import com.rockbass.misclimas.db.entities.Data
-import com.rockbass.misclimas.net.climaService
-import com.rockbass.misclimas.net.hasNetwork
+import com.rockbass.misclimas.net.Weather7TimerService
 import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import timber.log.Timber
+import javax.inject.Inject
 
-class IndexViewModel(application: Application) : AndroidViewModel(application){
-    private val TAG = IndexViewModel::class.java.name
-    private val db = MisClimasDB.getInstance(application)
-    private val ciudadDao = db.ciudadDAO()
+class IndexViewModel @ViewModelInject constructor(
+    private val ciudadDao : CiudadDAO,
+    private val climaService: Weather7TimerService
+) : ViewModel(){
 
     data class ReturnedData(
         val data: List<Data>? = null,
@@ -77,7 +71,9 @@ class IndexViewModel(application: Application) : AndroidViewModel(application){
                 ciudad.latitude!!
             ).enqueue(object: Callback<ClimaResponse> {
                 override fun onFailure(call: Call<ClimaResponse>, t: Throwable) {
-                    Log.e(TAG, t.message, t)
+
+                    Timber.e(t)
+
                     liveData.postValue(
                         ReturnedData(
                             hasError = true,

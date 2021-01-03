@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.NavHostFragment
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -21,12 +22,15 @@ import com.rockbass.misclimas.helpers.colocarIdCiudad
 import com.rockbass.misclimas.helpers.leerIdCiudad
 import com.rockbass.misclimas.helpers.setSelectionById
 import com.rockbass.misclimas.viewmodels.IndexViewModel
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class IndexFragment: Fragment() {
 
     private var idCiudad: Long? = null
     private var ciudad: Ciudad? = null
-    private lateinit var indexViewModel: IndexViewModel
+    private val indexViewModel: IndexViewModel by viewModels()
     private var isNavigation = false
     private lateinit var progressBar: ProgressBar
     private lateinit var cardView: View
@@ -47,13 +51,13 @@ class IndexFragment: Fragment() {
         return super.onOptionsItemSelected(item)
     }
 
-    fun agregar() {
+    private fun agregar() {
         //Navegamos para agregar ciudades
         val navController = NavHostFragment.findNavController(this)
         navController.navigate(R.id.action_indexFragment_to_placeAutoCompleteFragment)
     }
 
-    fun eliminar() {
+    private fun eliminar() {
         AlertDialog.Builder(
             context
         ).setTitle(R.string.titulo_eliminar)
@@ -61,7 +65,7 @@ class IndexFragment: Fragment() {
             .setPositiveButton(R.string.boton_eliminar
             ) { _, _ ->
                 indexViewModel.eliminarCiudad(this@IndexFragment.idCiudad!!)
-                    .observe(viewLifecycleOwner, Observer { returnedDeleted ->
+                    .observe(viewLifecycleOwner, { returnedDeleted ->
                         if (returnedDeleted.result) {
                             idCiudad = returnedDeleted.primerId
                             activity?.colocarIdCiudad(idCiudad!!)
@@ -70,7 +74,7 @@ class IndexFragment: Fragment() {
                         }else{
                             if (returnedDeleted.reason == IndexViewModel.ReasonsNotDeleted.SOLO_UNA_CIUDAD){
                                 Snackbar
-                                    .make(view!!, R.string.mensaje_no_eliminado_una_ciudad, Snackbar.LENGTH_LONG)
+                                    .make(requireView(), R.string.mensaje_no_eliminado_una_ciudad, Snackbar.LENGTH_LONG)
                                     .show()
                             }
                         }
@@ -87,8 +91,6 @@ class IndexFragment: Fragment() {
         setHasOptionsMenu(true)
 
         idCiudad = activity?.leerIdCiudad()
-        indexViewModel =
-            defaultViewModelProviderFactory.create(IndexViewModel::class.java)
     }
 
     override fun onCreateView(
@@ -117,11 +119,11 @@ class IndexFragment: Fragment() {
         return view
     }
 
-    fun configurarSpinner(spinner: Spinner){
+    private fun configurarSpinner(spinner: Spinner){
         indexViewModel.getCiudades()
-            .observe(this,
-                Observer { ciudades ->
-                    val adapter = ArrayAdapter(context!!,
+            .observe(viewLifecycleOwner,
+                { ciudades ->
+                    val adapter = ArrayAdapter(requireContext(),
                         R.layout.support_simple_spinner_dropdown_item,
                         ciudades
                     )
@@ -157,7 +159,7 @@ class IndexFragment: Fragment() {
     fun getClima(){
         indexViewModel.getClima(idCiudad!!)
             .observe(viewLifecycleOwner,
-                Observer { response ->
+                { response ->
                     if (!response.hasError){
                         ciudad = response.ciudad
                         val data = response.data

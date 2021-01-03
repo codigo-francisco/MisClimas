@@ -1,55 +1,72 @@
 package com.rockbass.misclimas.views
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
+import android.widget.Toast
+import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.NavHostFragment
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.mapbox.api.geocoding.v5.models.CarmenFeature
-import com.mapbox.geojson.Feature
-import com.mapbox.geojson.FeatureCollection
+import com.mapbox.geojson.Point
 import com.mapbox.mapboxsdk.camera.CameraPosition
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.geometry.LatLng
+import com.mapbox.mapboxsdk.location.LocationComponentActivationOptions
+import com.mapbox.mapboxsdk.location.modes.CameraMode
+import com.mapbox.mapboxsdk.location.modes.RenderMode
 import com.mapbox.mapboxsdk.maps.MapView
 import com.mapbox.mapboxsdk.maps.MapboxMap
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
 import com.mapbox.mapboxsdk.maps.Style
+import com.mapbox.mapboxsdk.plugins.annotation.SymbolManager
+import com.mapbox.mapboxsdk.plugins.annotation.SymbolOptions
 import com.mapbox.mapboxsdk.plugins.places.autocomplete.PlaceAutocomplete
 import com.mapbox.mapboxsdk.plugins.places.autocomplete.model.PlaceOptions
-import com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconImage
-import com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconOffset
-import com.mapbox.mapboxsdk.style.layers.SymbolLayer
-import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
-import com.rockbass.misclimas.MAPBOX_TOKEN
+import com.mapbox.mapboxsdk.style.layers.PropertyFactory.*
+import com.mapbox.search.MapboxSearchSdk
+import com.mapbox.search.ReverseGeoOptions
+import com.mapbox.search.SearchCallback
+import com.mapbox.search.result.SearchResult
+import com.rockbass.misclimas.BuildConfig
 import com.rockbass.misclimas.R
 import com.rockbass.misclimas.db.entities.Ciudad
 import com.rockbass.misclimas.helpers.colocarIdCiudad
 import com.rockbass.misclimas.viewmodels.PlaceViewModel
+import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 
+private const val REQUEST_LOCATION_AND_PHONE = 0
+private const val REQUEST_CODE_AUTOCOMPLETE = 10
+private const val symbolIconId = "symbolIconId"
+
+@AndroidEntryPoint
 class PlaceFragment : Fragment() {
 
-    private val REQUEST_CODE_AUTOCOMPLETE = 10
+    private var permissionLocalization = false
+    private var permissionReadPhone = false
     private var ciudad: Ciudad? = null
-    private lateinit var placeViewModel: PlaceViewModel
+    private val placeViewModel: PlaceViewModel by viewModels()
     private lateinit var mapView : MapView
     private var mapboxMap: MapboxMap? = null
-    private val symbolIconId = "symbolIconId"
-    private val geojsonSourceLayerId = "geojsonSourceLayerId"
-    private lateinit var buttonEscoger : MaterialButton
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        placeViewModel = defaultViewModelProviderFactory.create(PlaceViewModel::class.java)
-    }
-
+    private lateinit var buttonSetLocation : MaterialButton
+    private lateinit var fabLocation : FloatingActionButton
+    private lateinit var fabCurrentLocation: FloatingActionButton
+    private val reverseGeoCodingSearch = MapboxSearchSdk.createReverseGeocodingSearchEngine()
+    private lateinit var symbolManager: SymbolManager
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -58,51 +75,81 @@ class PlaceFragment : Fragment() {
             if (requestCode == REQUEST_CODE_AUTOCOMPLETE){
                 val feature = PlaceAutocomplete.getPlace(data)
                 feature?.also { carmenFeature ->
-                    locateMap(carmenFeature)
+                    if (carmenFeature.center() != null && carmenFeature.placeName()!= null)
+                        locateMap(carmenFeature.center()!!, carmenFeature.placeName()!!)
                 }
             }
         }
     }
 
-    fun locateMap(carmenFeature: CarmenFeature){
-        val point = carmenFeature.center()
-        ciudad = Ciudad(
-            name = carmenFeature.placeName(),
-            longitude = point?.longitude(),
-            latitude = point?.latitude(),
-            altitude = point?.altitude()
-        )
-
-        mapboxMap?.let {mapboxMap ->
-            val style = mapboxMap.style
-            style?.let {style ->
-                val source = style
-                    .getSourceAs<GeoJsonSource>(geojsonSourceLayerId)
-                source?.setGeoJson(
-                    FeatureCollection.fromFeatures(
-                        listOf(
-                            Feature.fromJson(carmenFeature.toJson())
-                        )
-                    )
-                )
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        if (requestCode == REQUEST_LOCATION_AND_PHONE ) {
+            val indexPermissionLocation = permissions.indexOf(Manifest.permission.ACCESS_FINE_LOCATION)
+            if (indexPermissionLocation != -1) {
+                permissionLocalization = grantResults[indexPermissionLocation] == PackageManager.PERMISSION_GRANTED
             }
 
-            mapboxMap.animateCamera(
-                CameraUpdateFactory.newCameraPosition(
-                    CameraPosition.Builder()
-                        .target(
-                            LatLng(
-                                carmenFeature.center()!!.latitude(),
-                                carmenFeature.center()!!.longitude()
-                            )
-                        )
-                        .zoom(12.0)
-                        .build()
-                ), 3000
-            )
-        }
+            val indexPermissionReadPhone = permissions.indexOf(Manifest.permission.READ_PHONE_STATE)
+            if (indexPermissionReadPhone != -1) {
+                permissionReadPhone = grantResults[indexPermissionReadPhone] == PackageManager.PERMISSION_GRANTED
+            }
 
-        buttonEscoger.isEnabled = true
+            if (!showExplanations()) {
+                if (!permissionLocalization) {
+                    MaterialAlertDialogBuilder(requireContext())
+                        .setMessage("No podra utilizar los servicios de localización del movil")
+                        .show()
+                }
+
+                if (!permissionReadPhone) {
+                    MaterialAlertDialogBuilder(requireContext())
+                        .setMessage("No podra utilizar los servicios de lectura del telefono, el mapa podría funcionar incorrectamente")
+                        .show()
+                }
+            }
+
+            configMap()
+        }
+    }
+
+    private fun locateMap(point: Point, cityName: String){
+        ciudad = Ciudad(
+            name = cityName,
+            longitude = point.longitude(),
+            latitude = point.latitude(),
+            altitude = point.altitude()
+        )
+
+        symbolManager.annotations.clear()
+
+        val symbolOptions = SymbolOptions()
+            .withIconImage(symbolIconId)
+            .withIconOffset(arrayOf(0f, -8f))
+            .withTextOffset(arrayOf(0f, 3f))
+            .withTextField(cityName)
+            .withGeometry(point)
+
+        symbolManager.create(symbolOptions)
+
+        mapboxMap?.animateCamera(
+            CameraUpdateFactory.newCameraPosition(
+                CameraPosition.Builder()
+                    .target(
+                        LatLng(
+                            point.latitude(),
+                            point.longitude()
+                        )
+                    )
+                    .zoom(12.0)
+                    .build()
+            ), 3000
+        )
+
+        buttonSetLocation.isEnabled = true
     }
 
     override fun onCreateView(
@@ -113,22 +160,105 @@ class PlaceFragment : Fragment() {
         val view = inflater.inflate(R.layout.place_fragment, container, false)
 
         mapView = view.findViewById(R.id.mapview)
-        mapView.onCreate(savedInstanceState)
-        mapView.getMapAsync(mapConfiguration)
 
-        val floatingButton = view.findViewById<FloatingActionButton>(R.id.fab_location_search)
-        floatingButton.setOnClickListener(clickFab)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && (needPermission() || !showExplanations())) {
+            requestPermissions()
+        } else {
+            configMap(savedInstanceState)
+        }
 
-        buttonEscoger = view.findViewById(R.id.button_escoger)
-        buttonEscoger.setOnClickListener(clickEscoger)
+        fabLocation = view.findViewById(R.id.fab_location_search)
+        fabLocation.setOnClickListener(clickFab)
+
+        buttonSetLocation = view.findViewById(R.id.button_escoger)
+        buttonSetLocation.setOnClickListener(clickEscoger)
+
+        fabCurrentLocation = view.findViewById(R.id.fabLocationOn)
+        fabCurrentLocation.setOnClickListener(fabCurrentLocationOnClick)
 
         return view
+    }
+
+    private fun showExplanations() : Boolean {
+        var showed = false
+
+        if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
+            showed = true
+
+            MaterialAlertDialogBuilder(requireContext())
+                .setMessage("Los permisos de localización son necesarios en caso de que quiera ubicar su posición")
+                .setPositiveButton("Permitir") { _, _ ->
+                    requestPermissions(
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    )
+                }
+                .setNegativeButton("No Gracias", null)
+                .show()
+        }else if (shouldShowRequestPermissionRationale(Manifest.permission.READ_PHONE_STATE)) {
+            showed = true
+
+            MaterialAlertDialogBuilder(requireContext())
+                .setMessage("El permiso de llamadas es necesario para saber el estado actual del telefono y hacer que el mapa funcione correctamente")
+                .setPositiveButton("Permitir") { _, _ ->
+                    requestPermissions(
+                        Manifest.permission.READ_PHONE_STATE
+                    )
+                }
+                .setNegativeButton("No Gracias", null)
+                .show()
+        }
+
+        return showed
+    }
+
+    private fun requestPermissions(vararg permissions: String = arrayOf(
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.READ_PHONE_STATE
+    )) {
+        requestPermissions(
+            permissions,
+            REQUEST_LOCATION_AND_PHONE
+        )
+    }
+
+    private fun needPermission(): Boolean {
+        val locationPermission = ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+        val readPhonePermission = ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_PHONE_STATE)
+
+        permissionLocalization = locationPermission == PackageManager.PERMISSION_GRANTED
+        permissionReadPhone = readPhonePermission == PackageManager.PERMISSION_GRANTED
+
+        return !permissionLocalization && !permissionReadPhone
+    }
+
+    private fun configMap(savedInstanceState: Bundle? = null) {
+        if (permissionReadPhone)
+            mapView.onCreate(savedInstanceState)
+        mapView.getMapAsync(mapConfiguration)
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun enableLocationComponent(loadedMapStyle: Style) {
+        if (permissionLocalization) {
+            val locationComponent = mapboxMap?.locationComponent
+
+            val locationOptions =
+                LocationComponentActivationOptions.builder(requireContext(), loadedMapStyle)
+                .build()
+
+            locationComponent?.activateLocationComponent(locationOptions)
+            locationComponent?.isLocationComponentEnabled = true
+            locationComponent?.cameraMode = CameraMode.TRACKING
+            locationComponent?.renderMode = RenderMode.NORMAL
+
+            fabCurrentLocation.isEnabled = true
+        }
     }
 
     private val clickEscoger = View.OnClickListener {
         ciudad?.let {ciudad->
             placeViewModel.insertarCiudad(ciudad).observe(
-                viewLifecycleOwner, Observer { idCiudad ->
+                viewLifecycleOwner, { idCiudad ->
                     //Redirigir a pantalla principal
                     activity?.colocarIdCiudad(idCiudad)
 
@@ -148,43 +278,86 @@ class PlaceFragment : Fragment() {
             .build()
 
         val intent = PlaceAutocomplete.IntentBuilder()
-            .accessToken(MAPBOX_TOKEN)
+            .accessToken(BuildConfig.MapboxAcessToken)
             .placeOptions(placeOptions)
             .build(activity)
         startActivityForResult(intent, REQUEST_CODE_AUTOCOMPLETE)
     }
 
+    private val fabCurrentLocationOnClick = View.OnClickListener {
+        val location = mapboxMap?.locationComponent?.lastKnownLocation
+        if (location?.longitude != null || location?.latitude != null) {
+            searchGeoCoding(location.longitude, location.latitude)
+        }
+    }
+
+    private fun searchGeoCoding(longitude: Double, latitude: Double) {
+        val point = Point.fromLngLat(
+            longitude,
+            latitude
+        )
+
+        val reverseOptions = ReverseGeoOptions.Builder(point)
+            .limit(1)
+            .build()
+
+        reverseGeoCodingSearch.search(
+            reverseOptions,
+            object: SearchCallback {
+                override fun onError(e: Exception) {
+                    Timber.e(e)
+                }
+
+                override fun onResults(results: List<SearchResult>) {
+                    if (results.isNotEmpty()) {
+                        val result = results.first()
+                        if (result.coordinate != null && result.address?.place != null)
+                            locateMap(result.coordinate!!, result.address?.place!!)
+                    } else {
+                        Toast.makeText(requireContext(), "Datos de la ciudad no encontrados", Toast.LENGTH_LONG).show()
+                    }
+                }
+
+            }
+        )
+    }
+
     private val mapConfiguration = object : OnMapReadyCallback{
         override fun onMapReady(mapboxMap: MapboxMap) {
+            fabLocation.isEnabled = true
             this@PlaceFragment.mapboxMap = mapboxMap
-            mapboxMap.setStyle(Style.MAPBOX_STREETS, Style.OnStyleLoaded { style ->
+
+            mapboxMap.addOnMapLongClickListener { position ->
+                searchGeoCoding(position.longitude, position.latitude)
+                true
+            }
+
+            mapboxMap.setStyle(Style.MAPBOX_STREETS) { style ->
+                enableLocationComponent(style)
+                symbolManager = SymbolManager(mapView, mapboxMap, style)
+
+                symbolManager.iconAllowOverlap = true
+
                 style.addImage(
                     symbolIconId,
-                    resources.getDrawable(R.drawable.ic_location_on_black_24dp, null)
+                    ResourcesCompat.getDrawable(
+                        resources,
+                        R.drawable.ic_location_on_black_24dp,
+                        null
+                    )!!
                 )
-
-                setUpSource(style)
-
-                setupLayer(style)
-            })
+            }
         }
+    }
 
-        fun setUpSource(loadedMapStyles: Style){
-            loadedMapStyles.addSource(
-                GeoJsonSource(
-                    geojsonSourceLayerId
-                )
-            )
-        }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        requireActivity().window?.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+    }
 
-        private fun setupLayer(loadedMapStyle: Style) {
-            loadedMapStyle.addLayer(
-                SymbolLayer("SYMBOL_LAYER_ID", geojsonSourceLayerId).withProperties(
-                    iconImage(symbolIconId),
-                    iconOffset(arrayOf(0f, -8f))
-                )
-            )
-        }
+    override fun onDetach() {
+        super.onDetach()
+        requireActivity().window?.clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
     }
 
     override fun onResume() {
@@ -207,8 +380,8 @@ class PlaceFragment : Fragment() {
         mapView.onLowMemory()
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onDestroyView() {
+        super.onDestroyView()
         mapView.onDestroy()
     }
 

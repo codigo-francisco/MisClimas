@@ -6,13 +6,14 @@ import android.view.*
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Observer
 import androidx.navigation.fragment.NavHostFragment
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.flexbox.FlexDirection
+import com.google.android.flexbox.FlexWrap
+import com.google.android.flexbox.FlexboxLayoutManager
+import com.google.android.flexbox.JustifyContent
 import com.google.android.material.snackbar.Snackbar
 import com.rockbass.misclimas.*
 import com.rockbass.misclimas.adapters.ClimaCardAdapter
@@ -23,7 +24,6 @@ import com.rockbass.misclimas.helpers.leerIdCiudad
 import com.rockbass.misclimas.helpers.setSelectionById
 import com.rockbass.misclimas.viewmodels.IndexViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class IndexFragment: Fragment() {
@@ -110,9 +110,12 @@ class IndexFragment: Fragment() {
 
         configurarSpinner(spinner)
 
-        recyclerView.layoutManager = LinearLayoutManager(
-            context, LinearLayoutManager.HORIZONTAL, false
-        )
+        val layoutManager = FlexboxLayoutManager(requireContext()).apply {
+            flexDirection = FlexDirection.ROW
+            justifyContent = JustifyContent.CENTER
+        }
+
+        recyclerView.layoutManager = layoutManager
         recyclerView.setHasFixedSize(true)
         recyclerView.setItemViewCacheSize(6)
 
@@ -163,8 +166,8 @@ class IndexFragment: Fragment() {
                     if (!response.hasError){
                         ciudad = response.ciudad
                         val data = response.data
-                        val dataBinding = DataBindingUtil.bind<ClimaCardBinding>(cardView)
-                        dataBinding?.clima = data?.first()
+                        val climaCard = ClimaCardBinding.bind(cardView)
+                        climaCard.clima = data?.first()
 
                         val restData = data?.drop(1)
                         val climaAdapter = ClimaCardAdapter(restData!!)

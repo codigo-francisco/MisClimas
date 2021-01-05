@@ -11,7 +11,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
@@ -45,9 +44,11 @@ import com.rockbass.misclimas.BuildConfig
 import com.rockbass.misclimas.R
 import com.rockbass.misclimas.db.entities.Ciudad
 import com.rockbass.misclimas.helpers.colocarIdCiudad
+import com.rockbass.misclimas.helpers.isDarkThemeOn
 import com.rockbass.misclimas.viewmodels.PlaceViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
+import android.view.WindowInsets.Type.*
 
 private const val REQUEST_LOCATION_AND_PHONE = 0
 private const val REQUEST_CODE_AUTOCOMPLETE = 10
@@ -251,7 +252,7 @@ class PlaceFragment : Fragment() {
             locationComponent?.cameraMode = CameraMode.TRACKING
             locationComponent?.renderMode = RenderMode.NORMAL
 
-            fabCurrentLocation.isEnabled = true
+            fabCurrentLocation.visibility = View.VISIBLE
         }
     }
 
@@ -322,42 +323,60 @@ class PlaceFragment : Fragment() {
         )
     }
 
-    private val mapConfiguration = object : OnMapReadyCallback{
-        override fun onMapReady(mapboxMap: MapboxMap) {
-            fabLocation.isEnabled = true
-            this@PlaceFragment.mapboxMap = mapboxMap
+    private val mapConfiguration = OnMapReadyCallback { mapboxMap ->
+        fabLocation.isEnabled = true
+        this@PlaceFragment.mapboxMap = mapboxMap
 
-            mapboxMap.addOnMapLongClickListener { position ->
-                searchGeoCoding(position.longitude, position.latitude)
-                true
-            }
+        mapboxMap.addOnMapLongClickListener { position ->
+            searchGeoCoding(position.longitude, position.latitude)
+            true
+        }
 
-            mapboxMap.setStyle(Style.MAPBOX_STREETS) { style ->
-                enableLocationComponent(style)
-                symbolManager = SymbolManager(mapView, mapboxMap, style)
+        val styleMap = if (requireContext().isDarkThemeOn()) Style.DARK else Style.LIGHT
 
-                symbolManager.iconAllowOverlap = true
+        mapboxMap.setStyle(styleMap) { style ->
+            enableLocationComponent(style)
+            symbolManager = SymbolManager(mapView, mapboxMap, style)
 
-                style.addImage(
-                    symbolIconId,
-                    ResourcesCompat.getDrawable(
-                        resources,
-                        R.drawable.ic_location_on_black_24dp,
-                        null
-                    )!!
-                )
-            }
+            symbolManager.iconAllowOverlap = true
+
+            style.addImage(
+                symbolIconId,
+                ResourcesCompat.getDrawable(
+                    resources,
+                    R.drawable.ic_location_on_black_24dp,
+                    null
+                )!!
+            )
         }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        requireActivity().window?.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+        val window = requireActivity().window
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.decorView.windowInsetsController?.hide(
+                navigationBars() or captionBar() or systemBars() or statusBars()
+            )
+        } else {
+            window.decorView.systemUiVisibility =
+                (View.SYSTEM_UI_FLAG_IMMERSIVE or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_FULLSCREEN)
+        }
+
     }
 
     override fun onDetach() {
         super.onDetach()
-        requireActivity().window?.clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+        val window = requireActivity().window
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.decorView.windowInsetsController?.show(
+                navigationBars() or captionBar() or systemBars() or statusBars()
+            )
+        } else {
+            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
+        }
+
     }
 
     override fun onResume() {

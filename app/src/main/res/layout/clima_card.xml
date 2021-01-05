@@ -8,16 +8,16 @@
             />
     </data>
     <com.google.android.material.card.MaterialCardView
-        android:layout_width="110dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        app:cardCornerRadius="@dimen/cardview_default_radius"
-        android:elevation="@dimen/cardview_default_elevation"
+        android:layout_width="140dp"
+        android:layout_height="240dp"
+        app:cardCornerRadius="2dp"
+        android:elevation="2dp"
         >
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:layout_margin="8dp">
 
             <TextView
                 android:id="@+id/textview_dia"
